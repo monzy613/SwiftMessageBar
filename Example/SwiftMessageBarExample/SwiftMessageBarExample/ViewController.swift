@@ -18,13 +18,21 @@ class ViewController: UIViewController {
     
     @IBAction func showSuccess(_ sender: AnyObject) {
         let message = "A really long message can go here, to provide a description for the user"
-        uuid = SwiftMessageBar.showMessageWithTitle(nil, message: message, type: .success, duration: 3, dismiss: false) {
-            print("oh hai")
-        }
+        let copy = UIButton()
+        copy.setTitleColor(UIColor.blue(), for: [])
+        copy.layer.borderColor = UIColor.blue().cgColor
+        copy.setTitle("copy", for: [])
+        
+        let dismiss = UIButton()
+        dismiss.setTitleColor(UIColor.red(), for: [])
+        dismiss.layer.borderColor = UIColor.red().cgColor
+        dismiss.setTitle("dismiss", for: [])
+        //dic: {button: uuid}
+        uuid = SwiftMessageBar.showMessageWithTitle(nil, message: message, type: .success, copyButton: copy, dismissButton: dismiss, duration: 3, dismiss: false, callback: nil)
     }
 
     @IBAction func showError(_ sender: AnyObject) {
-        let message = "A really long message can go here, to provide a description for the user"
+        let message = "A really long message can go here, to provide a description for the user, A really long message can go here, to provide a description for the user"
         uuid = SwiftMessageBar.showMessageWithTitle("Error", message: message, type: .error, duration: 3) {
             print("oh hai")
         }

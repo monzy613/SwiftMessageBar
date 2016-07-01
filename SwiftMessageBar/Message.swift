@@ -16,6 +16,8 @@ internal final class Message: UIView {
     private static let Padding: CGFloat = 10
     private static let MessageOffset: CGFloat = 2
     private static let IconSize: CGFloat = 36
+    private static let ButtonWidth: CGFloat = 20.0
+    private static let ButtonHeight: CGFloat = 10.0
     
     private let uuid = UUID()
     private var title: String?
@@ -27,9 +29,9 @@ internal final class Message: UIView {
     internal private(set) var callback: Callback?
     internal private(set) var duration: TimeInterval!
     internal private(set) var dismiss: Bool = true
-    
-    private let titleFont = .boldSystemFont(ofSize: 16)
-    private let messageFont = .systemFont(ofSize: 14)
+    private var titleFont: UIFont!
+    private var messageFont: UIFont!
+
     
     private var paragraphStyle: NSMutableParagraphStyle {
         let paragraphStyle = NSParagraphStyle.default().mutableCopy() as! NSMutableParagraphStyle
@@ -39,21 +41,39 @@ internal final class Message: UIView {
     
     init(title: String?, message: String?, backgroundColor: UIColor, titleFontColor: UIColor, messageFontColor: UIColor,
         icon: UIImage?, duration: TimeInterval, dismiss: Bool = true, callback: Callback?) {
-            self.title = title
-            self.message = message
-            self.duration = duration
-            self.callback = callback
-            self.titleFontColor = titleFontColor
-            self.messageFontColor = messageFontColor
-            self.icon = icon
-            self.dismiss = dismiss
-            
-            super.init(frame: CGRect.zero)
-            
-            self.backgroundColor = backgroundColor
-            usesAutoLayout(true)
-            initSubviews()
+        super.init(frame: CGRect.zero)
+        sharedInit(title: title, message: message, backgroundColor: backgroundColor, titleFontColor: titleFontColor, messageFontColor: messageFontColor, icon: icon, duration: duration, callback: callback)
+        self.backgroundColor = backgroundColor
+        usesAutoLayout(true)
+        initSubviews()
     }
+    
+    init(title: String?, message: String?, copybuttonPrototype: UIButton?, dismissbuttonPrototype: UIButton?, backgroundColor: UIColor, titleFontColor: UIColor, messageFontColor: UIColor,
+         icon: UIImage?, duration: TimeInterval, dismiss: Bool = true, callback: Callback?) {
+        super.init(frame: CGRect.zero)
+        sharedInit(title: title, message: message, backgroundColor: backgroundColor, titleFontColor: titleFontColor, messageFontColor: messageFontColor, icon: icon, duration: duration, callback: callback)
+        self.backgroundColor = backgroundColor
+        usesAutoLayout(true)
+        if let copyButton = copybuttonPrototype, let dismissButton = dismissbuttonPrototype {
+            initSubviews(withCopyButton: copyButton, dismissButton: dismissButton)
+        } else {
+            initSubviews()
+        }
+    }
+    
+    private func sharedInit(title: String?, message: String?, backgroundColor: UIColor, titleFontColor: UIColor, messageFontColor: UIColor,
+                            icon: UIImage?, duration: TimeInterval, dismiss: Bool = true, callback: Callback?) {
+        titleFont = .boldSystemFont(ofSize: 16)
+        messageFont = .systemFont(ofSize: 14)
+        self.title = title
+        self.message = message
+        self.duration = duration
+        self.callback = callback
+        self.titleFontColor = titleFontColor
+        self.messageFontColor = messageFontColor
+        self.icon = icon
+        self.dismiss = dismiss
+    }        
     
     private func initSubviews() {
         let iconImageView = initIcon()
@@ -104,6 +124,69 @@ internal final class Message: UIView {
                                              constant: 0))
         }
     }
+    
+    private func initSubviews(withCopyButton copyButton: UIButton, dismissButton: UIButton) {        
+        let iconImageView = initIcon()
+        let titleLabel = initTitle()
+        let messageLabel = initMessage()
+        let copyButton = initButton(withPrototype: copyButton)
+        let dismissButton = initButton(withPrototype: dismissButton)
+        
+        let views = ["icon": iconImageView, "title": titleLabel, "message": messageLabel]
+        let metrics = [
+            "iconTop": Message.Padding,
+            "titleTop": Message.Padding,
+            "right": Message.Padding,
+            "bottom": Message.Padding,
+            "messageLeft": Message.Padding + Message.MessageOffset,
+            "iconLeft": Message.Padding,
+            
+            "padding": Message.MessageOffset,
+            "width": Message.IconSize,
+            "height": Message.IconSize
+        ]
+        
+        addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "H:[icon(==width)]", options: [],
+                                                      metrics: metrics, views: views))
+        addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "V:[icon(==height)]", options: [],
+                                                      metrics: metrics, views: views))        
+        
+        
+        addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "H:|-iconLeft-[icon]-messageLeft-[title]-right-|",
+                                                      options: [], metrics: metrics, views: views))
+        addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "H:|-iconLeft-[icon]-messageLeft-[message]-right-|",
+                                                      options: [], metrics: metrics, views: views))
+        addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "V:|-titleTop-[title]-padding-[message]-bottom-|",
+                                                      options: [], metrics: metrics, views: views))
+        addConstraints([
+            NSLayoutConstraint(item: copyButton, attribute: .left, relatedBy: .equal, toItem: self, attribute: .left, multiplier: 1.0, constant: 0.0),
+            NSLayoutConstraint(item: copyButton, attribute: .width, relatedBy: .equal, toItem: self, attribute: .width, multiplier: 0.5, constant: 0.0),
+            NSLayoutConstraint(item: copyButton, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .height, multiplier: 0.5, constant: 30.0),
+            NSLayoutConstraint(item: copyButton, attribute: .top, relatedBy: .equal, toItem: self, attribute: .bottom, multiplier: 1.0, constant: 0.0),
+            NSLayoutConstraint(item: dismissButton, attribute: .right, relatedBy: .equal, toItem: self, attribute: .right, multiplier: 1.0, constant: 0.0),
+            NSLayoutConstraint(item: dismissButton, attribute: .width, relatedBy: .equal, toItem: self, attribute: .width, multiplier: 0.5, constant: 0.0),
+            NSLayoutConstraint(item: dismissButton, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .height, multiplier: 0.5, constant: 30.0),
+            NSLayoutConstraint(item: dismissButton, attribute: .top, relatedBy: .equal, toItem: self, attribute: .bottom, multiplier: 1.0, constant: 0.0)
+            ])
+        
+        if let message = message where !message.isEmpty {
+            addConstraint(NSLayoutConstraint(item: iconImageView,
+                                             attribute: NSLayoutAttribute.centerY,
+                                             relatedBy: NSLayoutRelation.equal,
+                                             toItem: messageLabel,
+                                             attribute: NSLayoutAttribute.centerY,
+                                             multiplier: (title?.isEmpty ?? true) ? 1 : 0.8,
+                                             constant: 0))
+        } else if let title = title where !title.isEmpty {
+            addConstraint(NSLayoutConstraint(item: iconImageView,
+                                             attribute: NSLayoutAttribute.centerY,
+                                             relatedBy: NSLayoutRelation.equal,
+                                             toItem: titleLabel,
+                                             attribute: NSLayoutAttribute.centerY,
+                                             multiplier: 1.0,
+                                             constant: 0))
+        }        
+    }    
 
     private func initIcon() -> UIImageView {
         let iconImageView = UIImageView()
@@ -146,6 +229,12 @@ internal final class Message: UIView {
         }
         return messageLabel
     }
+    
+    private func initButton(withPrototype button: UIButton) -> UIButton {
+        button.usesAutoLayout(true)
+        addSubview(button)
+        return button
+    }
 
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
@@ -173,7 +262,7 @@ internal final class Message: UIView {
     
     var titleSize: CGSize {
         let boundedSize = CGSize(width: availableWidth, height: CGFloat.greatestFiniteMagnitude)
-        let titleFontAttributes = [NSFontAttributeName: titleFont]
+        let titleFontAttributes = [NSFontAttributeName: titleFont!]
         if let size = title?.boundingRect(with: boundedSize,
                                           options: [.truncatesLastVisibleLine, .usesLineFragmentOrigin],
                                           attributes: titleFontAttributes, context: nil).size {
@@ -184,7 +273,7 @@ internal final class Message: UIView {
     
     var messageSize: CGSize {
         let boundedSize = CGSize(width: availableWidth, height: CGFloat.greatestFiniteMagnitude)
-        let titleFontAttributes = [NSFontAttributeName: messageFont]
+        let titleFontAttributes = [NSFontAttributeName: messageFont!]
         if let size = message?.boundingRect(with: boundedSize,
                                             options: [.truncatesLastVisibleLine, .usesLineFragmentOrigin],
                                             attributes: titleFontAttributes, context: nil).size {
@@ -227,4 +316,14 @@ extension UIView {
         translatesAutoresizingMaskIntoConstraints = !usesAutoLayout
     }
     
+}
+
+extension UIButton {
+    internal class func messageButton(type: UIButtonType) -> UIButton {
+        let button = UIButton(type: type)
+        button.backgroundColor = .clear()
+        button.layer.borderWidth = 0.5
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 12)
+        return button
+    } 
 }

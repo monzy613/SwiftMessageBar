@@ -112,19 +112,37 @@ public final class SwiftMessageBar {
         return SharedMessageBar.showMessageWithTitle(title, message: message, type: type, duration: duration,
                                                      dismiss: dismiss, callback: callback)
     }
+    
+    public static func showMessageWithTitle(_ title: String? = nil, message: String? = nil, type: MessageType,
+                                            copyButton: UIButton?, dismissButton: UIButton?,
+                                            duration: TimeInterval = 3, dismiss: Bool = true,
+                                            callback: Callback? = nil) -> UUID {
+        return SharedMessageBar.showMessageWithTitle(title, message: message, type: type, copyButton: copyButton, dismissButton: dismissButton, duration: duration,
+                                                     dismiss: dismiss, callback: callback)
+    }
 
     public func showMessageWithTitle(_ title: String? = nil, message: String? = nil, type: MessageType,
+                                     copyButton: UIButton? = nil, dismissButton: UIButton? = nil,
                                      duration: TimeInterval = 3, dismiss: Bool = true,
                                      callback: Callback? = nil) -> UUID {
-        let message = Message(title: title, message: message, backgroundColor: type.backgroundColor(fromConfig: config),
-                              titleFontColor: config.titleColor, messageFontColor: config.messageColor,
-                              icon: type.image(fromConfig: config), duration: duration, dismiss: dismiss,
-                              callback: callback)
-        messageQueue.enqueue(message)
+        var bar: Message
+        if copyButton == nil || dismissButton == nil {
+            bar = Message(title: title, message: message, backgroundColor: type.backgroundColor(fromConfig: config),
+                          titleFontColor: config.titleColor, messageFontColor: config.messageColor,
+                          icon: type.image(fromConfig: config), duration: duration, dismiss: dismiss,
+                          callback: callback)
+        } else {
+            bar = Message(title: title, message: message, copybuttonPrototype: copyButton, 
+                          dismissbuttonPrototype: dismissButton, backgroundColor: type.backgroundColor(fromConfig: config),
+                          titleFontColor: config.titleColor, messageFontColor: config.messageColor,
+                          icon: type.image(fromConfig: config), duration: duration, dismiss: dismiss,
+                          callback: callback)
+        }
+        messageQueue.enqueue(bar)
         if !isMessageVisible {
             dequeueNextMessage()
         }
-        return message.id()
+        return bar.id()
     }
     
     public func cancelAll(force: Bool = false) {

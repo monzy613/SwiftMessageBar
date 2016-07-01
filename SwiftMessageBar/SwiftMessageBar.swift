@@ -27,9 +27,15 @@ public struct MessageBarConfig {
         self.messageColor = messageColor
         self.statusBarHidden = statusBarHidden
         let bundle = Bundle(for: SwiftMessageBar.self)
-        self.successIcon = successIcon ?? UIImage(named: "icon-success", in: bundle, compatibleWith: nil)
-        self.infoIcon = infoIcon ?? UIImage(named: "icon-info", in: bundle, compatibleWith: nil)
-        self.errorIcon = errorIcon ?? UIImage(named: "icon-error", in: bundle, compatibleWith: nil)
+        if #available(iOS 8.0, *) {
+            self.successIcon = successIcon ?? UIImage(named: "icon-success", in: bundle, compatibleWith: nil)
+            self.infoIcon = infoIcon ?? UIImage(named: "icon-info", in: bundle, compatibleWith: nil)
+            self.errorIcon = errorIcon ?? UIImage(named: "icon-error", in: bundle, compatibleWith: nil)
+        } else {
+            self.successIcon = successIcon
+            self.infoIcon = infoIcon
+            self.errorIcon = errorIcon
+        }
     }
 
 }
